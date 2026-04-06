@@ -14,6 +14,15 @@
             min-height: 100vh;
         }
 
+        /* Fix scanner video to fill the container */
+        #scanner-container video {
+            width: 100% !important;
+            max-height: 350px;
+            object-fit: cover;
+        }
+        #scanner-container img[alt="Info icon"] { display: none !important; }
+        #scanner-container { position: relative; }
+
         .header {
             background: linear-gradient(135deg, #1a73e8, #0d47a1);
             color: white;
@@ -456,26 +465,24 @@
     function startScanner() {
         const scannerDiv = document.getElementById("scanner-container");
         scannerDiv.innerHTML = "";
+        document.getElementById("cameraError").innerHTML = "";
 
         html5QrCode = new Html5Qrcode("scanner-container");
+
+        const screenWidth = Math.min(window.innerWidth - 40, 460);
+        const qrboxWidth = Math.floor(screenWidth * 0.85);
+        const qrboxHeight = Math.floor(qrboxWidth * 0.4);
 
         html5QrCode.start(
             { facingMode: "environment" },
             {
-                fps: 10,
-                qrbox: { width: 280, height: 150 },
-                formatsToSupport: [
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.CODE_39,
-                    Html5QrcodeSupportedFormats.CODE_93,
-                    Html5QrcodeSupportedFormats.CODABAR,
-                    Html5QrcodeSupportedFormats.ITF,
-                    Html5QrcodeSupportedFormats.QR_CODE
-                ]
+                fps: 15,
+                qrbox: { width: qrboxWidth, height: qrboxHeight },
+                aspectRatio: 1.0,
+                disableFlip: false,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                }
             },
             onScanSuccess,
             () => {}
@@ -518,6 +525,18 @@
     }
 
     function onScanSuccess(decodedText) {
+        // Beep + vibrate on scan
+        try { navigator.vibrate(200); } catch(e) {}
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            osc.type = "sine";
+            osc.frequency.value = 1200;
+            osc.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+        } catch(e) {}
+
         stopScanner();
         scannedBarcode = decodedText;
         showResult(decodedText);
