@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Barcode Scanner - Inventory</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
@@ -13,15 +13,6 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-
-        /* Fix scanner video to fill the container */
-        #scanner-container video {
-            width: 100% !important;
-            max-height: 350px;
-            object-fit: cover;
-        }
-        #scanner-container img[alt="Info icon"] { display: none !important; }
-        #scanner-container { position: relative; }
 
         .header {
             background: linear-gradient(135deg, #1a73e8, #0d47a1);
@@ -39,7 +30,6 @@
             padding: 20px;
         }
 
-        /* Step 1: IN / OUT Selection */
         .step { display: none; }
         .step.active { display: block; }
 
@@ -84,11 +74,7 @@
             font-weight: 500;
         }
 
-        /* Step 2: Scanner */
-        .selected-badge {
-            text-align: center;
-            margin-bottom: 15px;
-        }
+        .selected-badge { text-align: center; margin-bottom: 15px; }
 
         .badge {
             display: inline-block;
@@ -103,173 +89,97 @@
         .badge-in { background: #43a047; }
         .badge-out { background: #e53935; }
 
-        #scanner-container {
+        /* Scan options */
+        .scan-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .scan-option-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 20px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .scan-option-btn:hover { border-color: #1a73e8; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+
+        .scan-option-btn .icon {
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e3f2fd;
+            border-radius: 12px;
+        }
+
+        .scan-option-btn .text small {
+            display: block;
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* Camera view */
+        #camera-view {
             width: 100%;
             border-radius: 12px;
             overflow: hidden;
             background: #000;
-            margin-bottom: 15px;
-        }
-
-        /* Step 3: Result Form */
-        .result-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-
-        .result-card h3 {
-            font-size: 1.2rem;
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 12px 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-            outline: none;
-        }
-
-        .form-group input:focus { border-color: #1a73e8; }
-
-        .form-group input[readonly] {
-            background: #f5f5f5;
-            color: #333;
-        }
-
-        .qty-input {
-            font-size: 1.5rem !important;
-            text-align: center;
-            font-weight: 700;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            margin-top: 8px;
-        }
-
-        .btn:active { transform: scale(0.98); }
-
-        .btn-primary {
-            background: #1a73e8;
-            color: white;
-        }
-
-        .btn-primary:hover { background: #1557b0; }
-
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
-        }
-
-        .btn-secondary:hover { background: #d0d0d0; }
-
-        .btn-back {
-            background: none;
-            border: 2px solid #ccc;
-            color: #666;
-            padding: 10px;
-            font-size: 0.95rem;
-            margin-top: 15px;
-        }
-
-        .btn-back:hover { border-color: #999; color: #333; }
-
-        /* Log Table */
-        .log-section {
-            margin-top: 30px;
-        }
-
-        .log-section h3 {
-            font-size: 1rem;
-            color: #555;
             margin-bottom: 10px;
+            position: relative;
+            min-height: 250px;
         }
 
-        .log-table {
+        #camera-view video {
             width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            font-size: 0.85rem;
+            display: block;
         }
 
-        .log-table th {
-            background: #f5f5f5;
-            padding: 10px 12px;
-            text-align: left;
+        #scan-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        #scan-box {
+            width: 80%;
+            height: 40%;
+            border: 3px solid #1a73e8;
+            border-radius: 8px;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
+        }
+
+        .scanning-text {
+            text-align: center;
+            color: #1a73e8;
             font-weight: 600;
-            color: #555;
+            font-size: 0.95rem;
+            margin: 8px 0;
+            animation: pulse 1.5s infinite;
         }
 
-        .log-table td {
-            padding: 10px 12px;
-            border-top: 1px solid #f0f0f0;
-        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-        .log-table .type-in { color: #2e7d32; font-weight: 700; }
-        .log-table .type-out { color: #c62828; font-weight: 700; }
+        .photo-input { display: none; }
 
-        .no-records {
-            text-align: center;
-            color: #999;
-            padding: 20px;
-            font-style: italic;
-        }
-
-        .success-msg {
-            text-align: center;
-            padding: 20px;
-            color: #2e7d32;
-            font-weight: 600;
-            font-size: 1.1rem;
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .item-not-found {
-            color: #e53935;
-            font-size: 0.85rem;
-            margin-top: 4px;
-        }
-
-        .scan-instruction {
-            text-align: center;
-            color: #777;
-            font-size: 0.9rem;
-            margin-top: 10px;
-        }
-
+        /* Manual entry */
         .manual-entry {
             margin-top: 15px;
             background: white;
@@ -285,10 +195,7 @@
             margin-bottom: 10px;
         }
 
-        .manual-row {
-            display: flex;
-            gap: 10px;
-        }
+        .manual-row { display: flex; gap: 10px; }
 
         .manual-row input {
             flex: 1;
@@ -314,18 +221,109 @@
 
         .btn-go:hover { background: #1557b0; }
 
-        .camera-error-box {
-            background: #fff3e0;
-            border: 1px solid #ffcc02;
-            border-radius: 10px;
-            padding: 14px;
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: #555;
-            line-height: 1.5;
+        /* Result form */
+        .result-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
-        .camera-error-box strong { color: #e65100; }
+        .result-card h3 {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .form-group input:focus { border-color: #1a73e8; }
+        .form-group input[readonly] { background: #f5f5f5; color: #333; }
+
+        .qty-input { font-size: 1.5rem !important; text-align: center; font-weight: 700; }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 8px;
+        }
+
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #1a73e8; color: white; }
+        .btn-primary:hover { background: #1557b0; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+
+        .btn-back {
+            background: none;
+            border: 2px solid #ccc;
+            color: #666;
+            padding: 10px;
+            font-size: 0.95rem;
+            margin-top: 15px;
+        }
+
+        .btn-back:hover { border-color: #999; color: #333; }
+
+        /* Log */
+        .log-section { margin-top: 30px; }
+        .log-section h3 { font-size: 1rem; color: #555; margin-bottom: 10px; }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            font-size: 0.85rem;
+        }
+
+        .log-table th { background: #f5f5f5; padding: 10px 12px; text-align: left; font-weight: 600; color: #555; }
+        .log-table td { padding: 10px 12px; border-top: 1px solid #f0f0f0; }
+        .log-table .type-in { color: #2e7d32; font-weight: 700; }
+        .log-table .type-out { color: #c62828; font-weight: 700; }
+        .no-records { text-align: center; color: #999; padding: 20px; font-style: italic; }
+
+        .success-msg {
+            text-align: center;
+            padding: 20px;
+            color: #2e7d32;
+            font-weight: 600;
+            font-size: 1.1rem;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .item-not-found { color: #e53935; font-size: 0.85rem; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -343,34 +341,55 @@
             <button class="btn-direction btn-in" onclick="selectDirection('IN')">&#x2B07; IN</button>
             <button class="btn-direction btn-out" onclick="selectDirection('OUT')">&#x2B06; OUT</button>
         </div>
-
-        <!-- Scanned Log -->
         <div class="log-section">
             <h3>Recent Transactions</h3>
             <div id="logContainer"></div>
         </div>
     </div>
 
-    <!-- STEP 2: Camera Scanner -->
+    <!-- STEP 2: Scan Method Selection -->
     <div id="step2" class="step">
         <div class="selected-badge">
             <span id="directionBadge" class="badge"></span>
         </div>
-        <div id="scanner-container"></div>
-        <p class="scan-instruction">Point camera at a barcode to scan</p>
-        <div id="cameraError"></div>
+        <p class="step-label">Choose how to scan:</p>
+        <div class="scan-options">
+            <button class="scan-option-btn" onclick="startLiveCamera()">
+                <div class="icon">&#x1F4F7;</div>
+                <div class="text">Live Camera Scan<small>Real-time barcode detection</small></div>
+            </button>
+            <button class="scan-option-btn" onclick="document.getElementById('photoInput').click()">
+                <div class="icon">&#x1F4F8;</div>
+                <div class="text">Take Photo of Barcode<small>Snap a picture — works on all phones</small></div>
+            </button>
+        </div>
+        <input type="file" id="photoInput" class="photo-input" accept="image/*" capture="environment" onchange="handlePhoto(this)">
         <div class="manual-entry">
-            <p>Or enter barcode manually:</p>
+            <p>Or type barcode number:</p>
             <div class="manual-row">
-                <input type="text" id="manualBarcode" placeholder="Type or paste barcode..." 
+                <input type="text" id="manualBarcode" inputmode="numeric" placeholder="Enter barcode number..."
                        onkeydown="if(event.key==='Enter') manualSubmit()">
                 <button class="btn-go" onclick="manualSubmit()">GO</button>
             </div>
         </div>
-        <button class="btn btn-back" onclick="goBack()">&#x2190; Back</button>
+        <button class="btn btn-back" onclick="goHome()">&#x2190; Back</button>
     </div>
 
-    <!-- STEP 3: Result & Quantity Form -->
+    <!-- STEP 2B: Live Camera View -->
+    <div id="step2b" class="step">
+        <div class="selected-badge">
+            <span id="directionBadgeCam" class="badge"></span>
+        </div>
+        <div id="camera-view">
+            <video id="videoEl" autoplay playsinline muted></video>
+            <div id="scan-overlay"><div id="scan-box"></div></div>
+        </div>
+        <p class="scanning-text" id="scanStatus">Scanning... hold barcode steady</p>
+        <canvas id="canvasEl" style="display:none;"></canvas>
+        <button class="btn btn-back" onclick="stopCamera(); showStep('step2')">&#x2190; Back to scan options</button>
+    </div>
+
+    <!-- STEP 3: Result & Qty Form -->
     <div id="step3" class="step">
         <div class="selected-badge" style="margin-bottom: 20px;">
             <span id="directionBadge2" class="badge"></span>
@@ -397,7 +416,7 @@
                 <input type="number" id="qtyInput" class="qty-input" min="1" value="1" placeholder="Enter qty">
             </div>
             <button class="btn btn-primary" onclick="submitEntry()">Submit</button>
-            <button class="btn btn-secondary" onclick="scanAgain()">Scan Another</button>
+            <button class="btn btn-secondary" onclick="showStep('step2')">Scan Another</button>
             <button class="btn btn-back" onclick="goHome()">&#x2190; Back to Home</button>
         </div>
     </div>
@@ -405,13 +424,9 @@
 </div>
 
 <script>
-    // ========== GOOGLE SHEET CONFIG ==========
-    // Paste your Google Apps Script Web App URL here (see SETUP-GOOGLE-SHEET.txt)
+    // ========== CONFIG ==========
     const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzzhj2y-fWoBvVOHqr1lrX3GTMyqmjfafQP4u6k6gbXA0ELqhgKrGEJgTVmZMdPF627/exec";
 
-    // ========== ITEM DATABASE ==========
-    // Maps barcodes to item names. Add your items here.
-    // When a barcode is scanned, the item name auto-fills.
     const itemDatabase = {
         "4901234567890": "Coca-Cola 330ml",
         "5901234123457": "Mineral Water 500ml",
@@ -423,177 +438,217 @@
         "4902505115486": "Ariel Powder 1kg",
         "8935049001225": "Kopiko Coffee 3in1",
         "4800888140685": "Safeguard Soap 130g",
-        // Add more items as needed
     };
 
     let currentDirection = "";
-    let scannedBarcode = "";
-    let html5QrCode = null;
+    let videoStream = null;
+    let scanTimer = null;
+    let isScanning = false;
     let transactionLog = JSON.parse(localStorage.getItem("inventoryLog") || "[]");
 
     // ========== NAVIGATION ==========
-    function showStep(stepId) {
+    function showStep(id) {
         document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
-        document.getElementById(stepId).classList.add("active");
+        document.getElementById(id).classList.add("active");
     }
 
     function selectDirection(dir) {
         currentDirection = dir;
-        const badge = document.getElementById("directionBadge");
-        badge.textContent = dir;
-        badge.className = "badge " + (dir === "IN" ? "badge-in" : "badge-out");
+        document.querySelectorAll(".badge").forEach(b => {
+            b.textContent = dir;
+            b.className = "badge " + (dir === "IN" ? "badge-in" : "badge-out");
+        });
         showStep("step2");
-        startScanner();
-    }
-
-    function goBack() {
-        stopScanner();
-        showStep("step1");
     }
 
     function goHome() {
+        stopCamera();
         showStep("step1");
         renderLog();
     }
 
-    function scanAgain() {
-        showStep("step2");
-        startScanner();
+    function sanitizeText(text) {
+        const d = document.createElement("div");
+        d.textContent = text;
+        return d.innerHTML;
     }
 
-    // ========== SCANNER ==========
-    function startScanner() {
-        const scannerDiv = document.getElementById("scanner-container");
-        scannerDiv.innerHTML = "";
-        document.getElementById("cameraError").innerHTML = "";
+    // ========== LIVE CAMERA with BarcodeDetector ==========
+    async function startLiveCamera() {
+        showStep("step2b");
+        const video = document.getElementById("videoEl");
+        const statusEl = document.getElementById("scanStatus");
+        statusEl.textContent = "Starting camera...";
+        isScanning = true;
 
-        html5QrCode = new Html5Qrcode("scanner-container");
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
+            });
+            video.srcObject = videoStream;
+            await video.play();
+            statusEl.textContent = "Scanning... hold barcode steady";
 
-        const screenWidth = Math.min(window.innerWidth - 40, 460);
-        const qrboxWidth = Math.floor(screenWidth * 0.85);
-        const qrboxHeight = Math.floor(qrboxWidth * 0.4);
-
-        html5QrCode.start(
-            { facingMode: "environment" },
-            {
-                fps: 15,
-                qrbox: { width: qrboxWidth, height: qrboxHeight },
-                aspectRatio: 1.0,
-                disableFlip: false,
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
-                }
-            },
-            onScanSuccess,
-            () => {}
-        ).catch(err => {
-            scannerDiv.innerHTML = "";
-            const errorBox = document.getElementById("cameraError");
-            const isFileProtocol = window.location.protocol === "file:";
-            if (isFileProtocol) {
-                errorBox.innerHTML = `<div class="camera-error-box">
-                    <strong>Camera blocked (file:// not allowed)</strong><br><br>
-                    Browsers block camera on local files. To fix this:<br><br>
-                    <strong>Option 1 — Use Phone:</strong><br>
-                    Run this in a terminal/command prompt:<br>
-                    <code>python -m http.server 8000</code><br>
-                    Then open <code>http://YOUR_PC_IP:8000</code> on your phone.<br><br>
-                    <strong>Option 2 — Use manual entry below.</strong>
-                </div>`;
-            } else {
-                errorBox.innerHTML = `<div class="camera-error-box">
-                    <strong>Camera error</strong><br>
-                    ${sanitizeText(err.toString())}<br>
-                    Please allow camera access and try again.
-                </div>`;
+            // Method 1: Native BarcodeDetector (Chrome 83+, Android)
+            if ("BarcodeDetector" in window) {
+                console.log("Using native BarcodeDetector");
+                const detector = new BarcodeDetector({
+                    formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","code_93","codabar","itf","qr_code"]
+                });
+                scanTimer = setInterval(async () => {
+                    if (!isScanning) return;
+                    try {
+                        const results = await detector.detect(video);
+                        if (results.length > 0) {
+                            foundBarcode(results[0].rawValue);
+                        }
+                    } catch(e) {}
+                }, 250);
             }
-        });
-    }
+            // Method 2: html5-qrcode frame scanning fallback
+            else {
+                console.log("Using html5-qrcode fallback");
+                const canvas = document.getElementById("canvasEl");
+                const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-    function stopScanner() {
-        if (html5QrCode) {
-            html5QrCode.stop().then(() => {
-                html5QrCode.clear();
-            }).catch(() => {});
+                scanTimer = setInterval(async () => {
+                    if (!isScanning) return;
+                    try {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        if (canvas.width === 0) return;
+                        ctx.drawImage(video, 0, 0);
+                        const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
+                        const file = new File([blob], "f.jpg", { type: "image/jpeg" });
+                        const qr = new Html5Qrcode("canvasEl");
+                        const result = await qr.scanFileV2(file, false);
+                        qr.clear();
+                        if (result && result.decodedText) {
+                            foundBarcode(result.decodedText);
+                        }
+                    } catch(e) {
+                        // No barcode in this frame — normal
+                    }
+                }, 1000);
+            }
+
+        } catch(err) {
+            statusEl.textContent = "";
+            document.getElementById("camera-view").innerHTML = `
+                <div style="padding:25px;color:#fff;text-align:center;">
+                    <p style="font-size:1.2rem;margin-bottom:12px;">&#9888; Camera not available</p>
+                    <p style="font-size:0.85rem;color:#ccc;">${sanitizeText(String(err.message || err))}</p>
+                    <p style="font-size:0.85rem;color:#aaa;margin-top:12px;">Go back and use <b>Take Photo</b> or <b>Type barcode</b> instead.</p>
+                </div>`;
         }
     }
 
-    function sanitizeText(text) {
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
+    function stopCamera() {
+        isScanning = false;
+        if (scanTimer) { clearInterval(scanTimer); scanTimer = null; }
+        if (videoStream) {
+            videoStream.getTracks().forEach(t => t.stop());
+            videoStream = null;
+        }
+        const v = document.getElementById("videoEl");
+        if (v) v.srcObject = null;
     }
 
-    function onScanSuccess(decodedText) {
-        // Beep + vibrate on scan
+    function foundBarcode(code) {
+        if (!code || !isScanning) return;
+        isScanning = false;
+        stopCamera();
+        // Feedback
         try { navigator.vibrate(200); } catch(e) {}
         try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            osc.type = "sine";
-            osc.frequency.value = 1200;
-            osc.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.15);
+            const a = new (window.AudioContext || window.webkitAudioContext)();
+            const o = a.createOscillator();
+            o.type = "sine"; o.frequency.value = 1200;
+            o.connect(a.destination); o.start(); o.stop(a.currentTime + 0.15);
         } catch(e) {}
-
-        stopScanner();
-        scannedBarcode = decodedText;
-        showResult(decodedText);
+        showResult(code);
     }
 
+    // ========== TAKE PHOTO ==========
+    function handlePhoto(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const statusDiv = document.createElement("div");
+        statusDiv.style.cssText = "text-align:center;padding:15px;color:#1a73e8;font-weight:600;";
+        statusDiv.textContent = "Reading barcode from photo...";
+        input.parentElement.insertBefore(statusDiv, input.nextSibling);
+
+        const qr = new Html5Qrcode("photoScanTemp");
+        // Create temp div
+        let tempDiv = document.getElementById("photoScanTemp");
+        if (!tempDiv) {
+            tempDiv = document.createElement("div");
+            tempDiv.id = "photoScanTemp";
+            tempDiv.style.display = "none";
+            document.body.appendChild(tempDiv);
+        }
+
+        const reader = new Html5Qrcode("photoScanTemp");
+        reader.scanFileV2(file, true).then(result => {
+            reader.clear();
+            statusDiv.remove();
+            if (result && result.decodedText) {
+                foundBarcode(result.decodedText);
+            } else {
+                alert("No barcode found in photo. Try again with a clearer image.");
+            }
+        }).catch(() => {
+            try { reader.clear(); } catch(e) {}
+            statusDiv.remove();
+            alert("Could not read barcode from photo.\n\nTips:\n- Get closer to the barcode\n- Make sure it's well-lit and in focus\n- Or type the barcode number manually");
+        });
+
+        input.value = "";
+    }
+
+    // ========== MANUAL ENTRY ==========
     function manualSubmit() {
         const input = document.getElementById("manualBarcode");
         const barcode = input.value.trim();
-        if (!barcode) {
-            alert("Please enter a barcode.");
-            return;
-        }
-        stopScanner();
-        scannedBarcode = barcode;
+        if (!barcode) { alert("Please enter a barcode."); return; }
         input.value = "";
         showResult(barcode);
     }
 
     // ========== RESULT ==========
     function showResult(barcode) {
-        const badge2 = document.getElementById("directionBadge2");
-        badge2.textContent = currentDirection;
-        badge2.className = "badge " + (currentDirection === "IN" ? "badge-in" : "badge-out");
+        document.querySelectorAll(".badge").forEach(b => {
+            b.textContent = currentDirection;
+            b.className = "badge " + (currentDirection === "IN" ? "badge-in" : "badge-out");
+        });
 
         document.getElementById("barcodeValue").value = barcode;
-
-        const itemName = itemDatabase[barcode];
         const itemNameInput = document.getElementById("itemName");
         const notFoundDiv = document.getElementById("itemNotFound");
         const newItemGroup = document.getElementById("newItemGroup");
 
-        if (itemName) {
-            // Found in local database
-            itemNameInput.value = itemName;
+        const localName = itemDatabase[barcode];
+        if (localName) {
+            itemNameInput.value = localName;
             notFoundDiv.style.display = "none";
             newItemGroup.style.display = "none";
         } else {
-            // Check localStorage for previously added items
             const customItems = JSON.parse(localStorage.getItem("customItems") || "{}");
             if (customItems[barcode]) {
                 itemNameInput.value = customItems[barcode];
                 notFoundDiv.style.display = "none";
                 newItemGroup.style.display = "none";
             } else {
-                // Try online lookup
-                itemNameInput.value = "Searching...";
+                itemNameInput.value = "Searching online...";
                 notFoundDiv.style.display = "none";
                 newItemGroup.style.display = "none";
-                lookupBarcode(barcode).then(foundName => {
-                    if (foundName) {
-                        itemNameInput.value = foundName;
-                        // Save to local so it's instant next time
+                lookupBarcode(barcode).then(name => {
+                    if (name) {
+                        itemNameInput.value = name;
                         const items = JSON.parse(localStorage.getItem("customItems") || "{}");
-                        items[barcode] = foundName;
+                        items[barcode] = name;
                         localStorage.setItem("customItems", JSON.stringify(items));
-                        notFoundDiv.style.display = "none";
-                        newItemGroup.style.display = "none";
                     } else {
                         itemNameInput.value = "Unknown Item";
                         notFoundDiv.style.display = "block";
@@ -606,37 +661,21 @@
 
         document.getElementById("qtyInput").value = 1;
         showStep("step3");
-
-        // Focus the quantity input
         setTimeout(() => document.getElementById("qtyInput").focus(), 300);
     }
 
-    // ========== ONLINE BARCODE LOOKUP ==========
+    // ========== ONLINE LOOKUP ==========
     async function lookupBarcode(barcode) {
-        // Try Open Food Facts first
         try {
-            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json`);
-            const data = await res.json();
-            if (data.status === 1 && data.product) {
-                const p = data.product;
-                return p.product_name || p.product_name_en || null;
-            }
-        } catch (e) {
-            console.log("Open Food Facts lookup failed:", e);
-        }
-
-        // Try Open Beauty Facts
+            const r = await fetch("https://world.openfoodfacts.org/api/v0/product/" + encodeURIComponent(barcode) + ".json");
+            const d = await r.json();
+            if (d.status === 1 && d.product) return d.product.product_name || d.product.product_name_en || null;
+        } catch(e) {}
         try {
-            const res = await fetch(`https://world.openbeautyfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json`);
-            const data = await res.json();
-            if (data.status === 1 && data.product) {
-                const p = data.product;
-                return p.product_name || p.product_name_en || null;
-            }
-        } catch (e) {
-            console.log("Open Beauty Facts lookup failed:", e);
-        }
-
+            const r = await fetch("https://world.openbeautyfacts.org/api/v0/product/" + encodeURIComponent(barcode) + ".json");
+            const d = await r.json();
+            if (d.status === 1 && d.product) return d.product.product_name || d.product.product_name_en || null;
+        } catch(e) {}
         return null;
     }
 
@@ -645,57 +684,31 @@
         const barcode = document.getElementById("barcodeValue").value;
         let itemName = document.getElementById("itemName").value;
         const qty = parseInt(document.getElementById("qtyInput").value);
+        if (!qty || qty < 1) { alert("Please enter a valid quantity."); return; }
 
-        if (!qty || qty < 1) {
-            alert("Please enter a valid quantity.");
-            return;
-        }
-
-        // If new item name was entered, save it
         const newItemName = document.getElementById("newItemName").value.trim();
         if (newItemName) {
             itemName = newItemName;
-            const customItems = JSON.parse(localStorage.getItem("customItems") || "{}");
-            customItems[barcode] = itemName;
-            localStorage.setItem("customItems", JSON.stringify(customItems));
+            const c = JSON.parse(localStorage.getItem("customItems") || "{}");
+            c[barcode] = itemName;
+            localStorage.setItem("customItems", JSON.stringify(c));
         }
 
-        const entry = {
-            direction: currentDirection,
-            barcode: barcode,
-            itemName: itemName,
-            qty: qty,
-            timestamp: new Date().toLocaleString()
-        };
-
+        const entry = { direction: currentDirection, barcode, itemName, qty, timestamp: new Date().toLocaleString() };
         transactionLog.unshift(entry);
         localStorage.setItem("inventoryLog", JSON.stringify(transactionLog));
 
-        // Show saving state
         const card = document.querySelector(".result-card");
-        const originalHTML = card.innerHTML;
-        card.innerHTML = `<div class="success-msg">Saving to Google Sheet...</div>`;
+        const saved = card.innerHTML;
+        card.innerHTML = '<div class="success-msg">Saving...</div>';
 
-        // Send to Google Sheet
-        sendToGoogleSheet(entry).then(success => {
-            if (success) {
-                card.innerHTML = `<div class="success-msg">
-                    &#x2713; ${sanitizeText(currentDirection)} recorded!<br>
-                    ${sanitizeText(itemName)} x ${qty}<br>
-                    <small style="color:#888;">Saved to Google Sheet</small>
-                </div>`;
-            } else {
-                card.innerHTML = `<div class="success-msg">
-                    &#x2713; ${sanitizeText(currentDirection)} recorded!<br>
-                    ${sanitizeText(itemName)} x ${qty}<br>
-                    <small style="color:#e53935;">Google Sheet: offline/not configured</small>
-                </div>`;
-            }
-            setTimeout(() => {
-                card.innerHTML = originalHTML;
-                rebindFormEvents();
-                goHome();
-            }, 1800);
+        sendToGoogleSheet(entry).then(ok => {
+            card.innerHTML = `<div class="success-msg">
+                &#x2713; ${sanitizeText(currentDirection)} recorded!<br>
+                ${sanitizeText(itemName)} x ${qty}<br>
+                <small style="color:${ok ? '#888' : '#e53935'}">${ok ? 'Saved to Google Sheet' : 'Sheet offline/not configured'}</small>
+            </div>`;
+            setTimeout(() => { card.innerHTML = saved; goHome(); }, 1800);
         });
     }
 
@@ -703,55 +716,25 @@
     async function sendToGoogleSheet(entry) {
         if (!GOOGLE_SHEET_URL) return false;
         try {
-            const response = await fetch(GOOGLE_SHEET_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(entry)
-            });
+            await fetch(GOOGLE_SHEET_URL, { method: "POST", mode: "no-cors",
+                headers: { "Content-Type": "application/json" }, body: JSON.stringify(entry) });
             return true;
-        } catch (e) {
-            console.error("Google Sheet error:", e);
-            return false;
-        }
+        } catch(e) { return false; }
     }
 
-    function rebindFormEvents() {
-        // Re-attach onclick since innerHTML was replaced
-        document.querySelector(".result-card .btn-primary").onclick = submitEntry;
-        document.querySelector(".result-card .btn-secondary").onclick = scanAgain;
-        document.querySelector(".result-card .btn-back").onclick = goHome;
-    }
-
-    // ========== LOG TABLE ==========
+    // ========== LOG ==========
     function renderLog() {
-        const container = document.getElementById("logContainer");
-        if (transactionLog.length === 0) {
-            container.innerHTML = '<p class="no-records">No transactions yet. Start scanning!</p>';
-            return;
+        const c = document.getElementById("logContainer");
+        if (!transactionLog.length) { c.innerHTML = '<p class="no-records">No transactions yet.</p>'; return; }
+        let h = '<table class="log-table"><thead><tr><th>Type</th><th>Item</th><th>Qty</th><th>Time</th></tr></thead><tbody>';
+        for (const i of transactionLog.slice(0, 20)) {
+            h += `<tr><td class="${i.direction==='IN'?'type-in':'type-out'}">${sanitizeText(i.direction)}</td>
+                  <td>${sanitizeText(i.itemName)}</td><td>${Number(i.qty)}</td><td>${sanitizeText(i.timestamp)}</td></tr>`;
         }
-
-        const recentItems = transactionLog.slice(0, 20);
-        let html = `<table class="log-table">
-            <thead>
-                <tr><th>Type</th><th>Item</th><th>Qty</th><th>Time</th></tr>
-            </thead><tbody>`;
-
-        for (const item of recentItems) {
-            const typeClass = item.direction === "IN" ? "type-in" : "type-out";
-            html += `<tr>
-                <td class="${typeClass}">${sanitizeText(item.direction)}</td>
-                <td>${sanitizeText(item.itemName)}</td>
-                <td>${Number(item.qty)}</td>
-                <td>${sanitizeText(item.timestamp)}</td>
-            </tr>`;
-        }
-
-        html += "</tbody></table>";
-        container.innerHTML = html;
+        h += '</tbody></table>';
+        c.innerHTML = h;
     }
 
-    // Init
     renderLog();
 </script>
 
