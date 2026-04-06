@@ -24,19 +24,38 @@
             flex: 1; padding: 40px 20px; font-size: 1.8rem; font-weight: 700;
             border: none; border-radius: 16px; cursor: pointer;
             color: white; text-transform: uppercase; letter-spacing: 2px;
-            transition: transform 0.15s, box-shadow 0.15s;
         }
-        .btn-direction:active { transform: translateY(0); }
+        .btn-direction:active { transform: scale(0.96); }
         .btn-in { background: linear-gradient(135deg, #43a047, #2e7d32); box-shadow: 0 4px 15px rgba(46,125,50,0.4); }
         .btn-out { background: linear-gradient(135deg, #e53935, #c62828); box-shadow: 0 4px 15px rgba(198,40,40,0.4); }
 
         .step-label { text-align: center; font-size: 1.1rem; color: #555; margin-bottom: 10px; font-weight: 500; }
         .selected-badge { text-align: center; margin-bottom: 15px; }
-        .badge { display: inline-block; padding: 8px 24px; border-radius: 20px; color: white; font-weight: 700; font-size: 1rem; letter-spacing: 1px; }
+        .badge { display: inline-block; padding: 8px 24px; border-radius: 20px; color: white; font-weight: 700; font-size: 1rem; }
         .badge-in { background: #43a047; }
         .badge-out { background: #e53935; }
 
-        #scanner-container { width: 100%; min-height: 300px; border-radius: 12px; overflow: hidden; background: #000; margin-bottom: 10px; }
+        #scanner-viewport {
+            position: relative; width: 100%; border-radius: 12px;
+            overflow: hidden; background: #000; margin-bottom: 10px;
+            min-height: 300px;
+        }
+        #scanner-viewport video, #scanner-viewport canvas {
+            width: 100% !important; height: auto !important; display: block;
+        }
+        .scan-line-overlay {
+            position: absolute; left: 5%; width: 90%; height: 3px;
+            background: #e53935; top: 50%; z-index: 10;
+            animation: scanAnim 2s ease-in-out infinite;
+            box-shadow: 0 0 8px rgba(229,57,53,0.6);
+            pointer-events: none;
+        }
+        @keyframes scanAnim { 0%,100% { top: 30%; } 50% { top: 70%; } }
+        .scan-status {
+            text-align: center; padding: 8px; font-weight: 600; font-size: 0.95rem;
+            color: #1a73e8; animation: blink 1.5s infinite;
+        }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
         .manual-entry { margin-top: 15px; background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
         .manual-entry p { text-align: center; font-size: 0.85rem; color: #888; margin-bottom: 10px; }
@@ -48,8 +67,8 @@
         .result-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .result-card h3 { font-size: 1.2rem; color: #333; margin-bottom: 20px; text-align: center; }
         .form-group { margin-bottom: 18px; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .form-group input { width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #555; margin-bottom: 6px; text-transform: uppercase; }
+        .form-group input { width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; outline: none; }
         .form-group input:focus { border-color: #1a73e8; }
         .form-group input[readonly] { background: #f5f5f5; color: #333; }
         .qty-input { font-size: 1.5rem !important; text-align: center; font-weight: 700; }
@@ -68,21 +87,19 @@
         .log-table .type-in { color: #2e7d32; font-weight: 700; }
         .log-table .type-out { color: #c62828; font-weight: 700; }
         .no-records { text-align: center; color: #999; padding: 20px; font-style: italic; }
-
-        .success-msg { text-align: center; padding: 20px; color: #2e7d32; font-weight: 600; font-size: 1.1rem; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .success-msg { text-align: center; padding: 20px; color: #2e7d32; font-weight: 600; font-size: 1.1rem; }
         .item-not-found { color: #e53935; font-size: 0.85rem; margin-top: 4px; }
+
+        /* Quagga canvas fixes */
+        #scanner-viewport > canvas.drawingBuffer { display: none !important; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1>Barcode Inventory Scanner</h1>
-</div>
+<div class="header"><h1>Barcode Inventory Scanner</h1></div>
 
 <div class="container">
 
-    <!-- STEP 1: IN / OUT -->
     <div id="step1" class="step active">
         <p class="step-label">Select transaction type:</p>
         <div class="direction-buttons">
@@ -95,16 +112,16 @@
         </div>
     </div>
 
-    <!-- STEP 2: Scanner -->
     <div id="step2" class="step">
-        <div class="selected-badge">
-            <span id="directionBadge" class="badge"></span>
+        <div class="selected-badge"><span id="directionBadge" class="badge"></span></div>
+        <div id="scanner-viewport">
+            <div class="scan-line-overlay"></div>
         </div>
-        <div id="scanner-container"></div>
+        <p class="scan-status" id="scanStatus">Initializing...</p>
         <div class="manual-entry">
             <p>Or type barcode number:</p>
             <div class="manual-row">
-                <input type="text" id="manualBarcode" inputmode="numeric" placeholder="Enter barcode number..."
+                <input type="text" id="manualBarcode" inputmode="numeric" placeholder="Enter barcode..."
                        onkeydown="if(event.key==='Enter') manualSubmit()">
                 <button class="btn-go" onclick="manualSubmit()">GO</button>
             </div>
@@ -112,11 +129,8 @@
         <button class="btn btn-back" onclick="goHome()">&#x2190; Back</button>
     </div>
 
-    <!-- STEP 3: Result -->
     <div id="step3" class="step">
-        <div class="selected-badge" style="margin-bottom: 20px;">
-            <span id="directionBadge2" class="badge"></span>
-        </div>
+        <div class="selected-badge" style="margin-bottom:20px;"><span id="directionBadge2" class="badge"></span></div>
         <div class="result-card">
             <h3>Scanned Item</h3>
             <div class="form-group">
@@ -144,8 +158,10 @@
 
 </div>
 
+<!-- QuaggaJS - proven barcode scanner library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
 <script>
-    // ========== CONFIG ==========
     const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzzhj2y-fWoBvVOHqr1lrX3GTMyqmjfafQP4u6k6gbXA0ELqhgKrGEJgTVmZMdPF627/exec";
 
     const itemDatabase = {
@@ -162,10 +178,11 @@
     };
 
     let currentDirection = "";
-    let scanner = null;
+    let scanning = false;
+    let lastCode = "";
+    let codeCount = 0;
     let transactionLog = JSON.parse(localStorage.getItem("inventoryLog") || "[]");
 
-    // ========== NAV ==========
     function showStep(id) {
         document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
         document.getElementById(id).classList.add("active");
@@ -178,107 +195,114 @@
             b.className = "badge " + (dir === "IN" ? "badge-in" : "badge-out");
         });
         showStep("step2");
-        startNativeScanner();
+        startQuagga();
     }
 
     function goHome() {
-        stopScanner();
+        stopQuagga();
         showStep("step1");
         renderLog();
     }
 
     function scanAgain() {
         showStep("step2");
-        startNativeScanner();
+        startQuagga();
     }
 
-    function sanitizeText(t) {
+    function sanitize(t) {
         const d = document.createElement("div");
         d.textContent = t;
         return d.innerHTML;
     }
 
-    // ========== NATIVE BARCODE DETECTOR ==========
-    let videoStream = null;
-    let scanInterval = null;
+    // ========== QUAGGA BARCODE SCANNER ==========
+    function startQuagga() {
+        stopQuagga();
+        scanning = true;
+        lastCode = "";
+        codeCount = 0;
+        const statusEl = document.getElementById("scanStatus");
+        statusEl.textContent = "Starting camera...";
 
-    async function startNativeScanner() {
-        stopScanner();
-        const container = document.getElementById("scanner-container");
-
-        // Use native BarcodeDetector if available (fast, works on Android Chrome)
-        if ("BarcodeDetector" in window) {
-            container.innerHTML = '<video id="scanVideo" autoplay playsinline muted style="width:100%;display:block;border-radius:12px;"></video>' +
-                '<p style="text-align:center;color:#1a73e8;font-weight:600;padding:8px;animation:pulse 1.5s infinite;">Scanning... hold barcode steady</p>';
-
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
-                });
-                const video = document.getElementById("scanVideo");
-                video.srcObject = videoStream;
-                await video.play();
-
-                const detector = new BarcodeDetector({
-                    formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","code_93","codabar","itf","qr_code","data_matrix"]
-                });
-
-                scanInterval = setInterval(async () => {
-                    try {
-                        const results = await detector.detect(video);
-                        if (results.length > 0) {
-                            onBarcode(results[0].rawValue);
-                        }
-                    } catch(e) {}
-                }, 150);
-            } catch(err) {
-                container.innerHTML = '<p style="color:#fff;padding:20px;text-align:center;">Camera error: ' + sanitizeText(String(err.message || err)) +
-                    '<br><br>Use manual entry below.</p>';
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector("#scanner-viewport"),
+                constraints: {
+                    facingMode: "environment",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            },
+            frequency: 10,
+            decoder: {
+                readers: [
+                    "ean_reader",
+                    "ean_8_reader",
+                    "upc_reader",
+                    "upc_e_reader",
+                    "code_128_reader",
+                    "code_39_reader",
+                    "code_93_reader",
+                    "codabar_reader",
+                    "i2of5_reader"
+                ],
+                multiple: false
+            },
+            locate: true,
+            locator: {
+                patchSize: "medium",
+                halfSample: true
             }
-        }
-        // Fallback: load and use html5-qrcode library
-        else {
-            await loadLib();
-            container.innerHTML = "";
-            scanner = new Html5QrcodeScanner("scanner-container", {
-                fps: 15,
-                qrbox: function(viewfinderWidth, viewfinderHeight) {
-                    return { width: Math.floor(viewfinderWidth * 0.85), height: Math.floor(viewfinderWidth * 0.3) };
-                },
-                rememberLastUsedCamera: true,
-                showTorchButtonIfSupported: true,
-                formatsToSupport: [
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.CODE_39,
-                    Html5QrcodeSupportedFormats.CODE_93,
-                    Html5QrcodeSupportedFormats.CODABAR,
-                    Html5QrcodeSupportedFormats.ITF,
-                    Html5QrcodeSupportedFormats.QR_CODE
-                ]
-            }, false);
-            scanner.render(onBarcode, () => {});
-        }
+        }, function(err) {
+            if (err) {
+                console.error("Quagga init error:", err);
+                statusEl.textContent = "Camera error. Use manual entry below.";
+                return;
+            }
+            Quagga.start();
+            statusEl.textContent = "Scanning... hold barcode steady";
+        });
+
+        // Require the same code to be detected 3 times in a row for accuracy
+        Quagga.onDetected(function(result) {
+            if (!scanning) return;
+            const code = result.codeResult.code;
+            if (!code) return;
+
+            // Confidence check — only accept if enough code errors are low
+            const errors = result.codeResult.decodedCodes
+                .filter(d => d.error !== undefined)
+                .map(d => d.error);
+            const avgError = errors.reduce((a, b) => a + b, 0) / errors.length;
+            if (avgError > 0.25) return; // Skip low-confidence reads
+
+            if (code === lastCode) {
+                codeCount++;
+            } else {
+                lastCode = code;
+                codeCount = 1;
+            }
+
+            // Require 3 consecutive identical reads for reliability
+            if (codeCount >= 3) {
+                onBarcode(code);
+            }
+        });
     }
 
-    function stopScanner() {
-        // Stop native scanner
-        if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-        if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-        // Stop html5-qrcode scanner
-        if (scanner) {
-            try { scanner.clear(); } catch(e) {}
-            scanner = null;
-        }
+    function stopQuagga() {
+        scanning = false;
+        try { Quagga.offDetected(); } catch(e) {}
+        try { Quagga.stop(); } catch(e) {}
     }
 
     function onBarcode(code) {
-        if (!code) return;
-        stopScanner();
-        // Vibrate + beep
+        if (!scanning) return;
+        scanning = false;
+        stopQuagga();
+        // Feedback
         try { navigator.vibrate(200); } catch(e) {}
         try {
             const a = new (window.AudioContext || window.webkitAudioContext)();
@@ -289,25 +313,12 @@
         showResult(code);
     }
 
-    // ========== LOAD LIBRARY ==========
-    let libLoaded = false;
-    function loadLib() {
-        if (libLoaded) return Promise.resolve();
-        return new Promise((resolve) => {
-            const s = document.createElement("script");
-            s.src = "https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js";
-            s.onload = () => { libLoaded = true; resolve(); };
-            s.onerror = () => resolve();
-            document.head.appendChild(s);
-        });
-    }
-
     // ========== MANUAL ==========
     function manualSubmit() {
         const input = document.getElementById("manualBarcode");
         const barcode = input.value.trim();
         if (!barcode) { alert("Please enter a barcode."); return; }
-        stopScanner();
+        stopQuagga();
         input.value = "";
         showResult(barcode);
     }
@@ -359,7 +370,6 @@
         setTimeout(() => document.getElementById("qtyInput").focus(), 300);
     }
 
-    // ========== ONLINE LOOKUP ==========
     async function lookupBarcode(barcode) {
         try {
             const r = await fetch("https://world.openfoodfacts.org/api/v0/product/" + encodeURIComponent(barcode) + ".json");
@@ -398,14 +408,13 @@
         card.innerHTML = '<div class="success-msg">Saving...</div>';
 
         sendToSheet(entry).then(ok => {
-            card.innerHTML = '<div class="success-msg">&#x2713; ' + sanitizeText(currentDirection) + ' recorded!<br>' +
-                sanitizeText(itemName) + ' x ' + qty + '<br><small style="color:' + (ok ? '#888' : '#e53935') + '">' +
+            card.innerHTML = '<div class="success-msg">&#x2713; ' + sanitize(currentDirection) + ' recorded!<br>' +
+                sanitize(itemName) + ' x ' + qty + '<br><small style="color:' + (ok ? '#888' : '#e53935') + '">' +
                 (ok ? 'Saved to Google Sheet' : 'Sheet offline') + '</small></div>';
             setTimeout(() => { card.innerHTML = saved; goHome(); }, 1800);
         });
     }
 
-    // ========== GOOGLE SHEET ==========
     async function sendToSheet(entry) {
         if (!GOOGLE_SHEET_URL) return false;
         try {
@@ -415,14 +424,13 @@
         } catch(e) { return false; }
     }
 
-    // ========== LOG ==========
     function renderLog() {
         const c = document.getElementById("logContainer");
         if (!transactionLog.length) { c.innerHTML = '<p class="no-records">No transactions yet.</p>'; return; }
         let h = '<table class="log-table"><thead><tr><th>Type</th><th>Item</th><th>Qty</th><th>Time</th></tr></thead><tbody>';
         for (const i of transactionLog.slice(0, 20)) {
-            h += '<tr><td class="' + (i.direction === 'IN' ? 'type-in' : 'type-out') + '">' + sanitizeText(i.direction) + '</td>' +
-                '<td>' + sanitizeText(i.itemName) + '</td><td>' + Number(i.qty) + '</td><td>' + sanitizeText(i.timestamp) + '</td></tr>';
+            h += '<tr><td class="' + (i.direction === 'IN' ? 'type-in' : 'type-out') + '">' + sanitize(i.direction) + '</td>' +
+                '<td>' + sanitize(i.itemName) + '</td><td>' + Number(i.qty) + '</td><td>' + sanitize(i.timestamp) + '</td></tr>';
         }
         c.innerHTML = h + '</tbody></table>';
     }
