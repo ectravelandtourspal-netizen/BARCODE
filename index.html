@@ -569,6 +569,7 @@
         const newItemGroup = document.getElementById("newItemGroup");
 
         if (itemName) {
+            // Found in local database
             itemNameInput.value = itemName;
             notFoundDiv.style.display = "none";
             newItemGroup.style.display = "none";
@@ -580,10 +581,26 @@
                 notFoundDiv.style.display = "none";
                 newItemGroup.style.display = "none";
             } else {
-                itemNameInput.value = "Unknown Item";
-                notFoundDiv.style.display = "block";
-                newItemGroup.style.display = "block";
-                document.getElementById("newItemName").value = "";
+                // Try online lookup
+                itemNameInput.value = "Searching...";
+                notFoundDiv.style.display = "none";
+                newItemGroup.style.display = "none";
+                lookupBarcode(barcode).then(foundName => {
+                    if (foundName) {
+                        itemNameInput.value = foundName;
+                        // Save to local so it's instant next time
+                        const items = JSON.parse(localStorage.getItem("customItems") || "{}");
+                        items[barcode] = foundName;
+                        localStorage.setItem("customItems", JSON.stringify(items));
+                        notFoundDiv.style.display = "none";
+                        newItemGroup.style.display = "none";
+                    } else {
+                        itemNameInput.value = "Unknown Item";
+                        notFoundDiv.style.display = "block";
+                        newItemGroup.style.display = "block";
+                        document.getElementById("newItemName").value = "";
+                    }
+                });
             }
         }
 
@@ -592,6 +609,35 @@
 
         // Focus the quantity input
         setTimeout(() => document.getElementById("qtyInput").focus(), 300);
+    }
+
+    // ========== ONLINE BARCODE LOOKUP ==========
+    async function lookupBarcode(barcode) {
+        // Try Open Food Facts first
+        try {
+            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json`);
+            const data = await res.json();
+            if (data.status === 1 && data.product) {
+                const p = data.product;
+                return p.product_name || p.product_name_en || null;
+            }
+        } catch (e) {
+            console.log("Open Food Facts lookup failed:", e);
+        }
+
+        // Try Open Beauty Facts
+        try {
+            const res = await fetch(`https://world.openbeautyfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json`);
+            const data = await res.json();
+            if (data.status === 1 && data.product) {
+                const p = data.product;
+                return p.product_name || p.product_name_en || null;
+            }
+        } catch (e) {
+            console.log("Open Beauty Facts lookup failed:", e);
+        }
+
+        return null;
     }
 
     // ========== SUBMIT ==========
