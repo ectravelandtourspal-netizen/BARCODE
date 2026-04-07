@@ -335,34 +335,45 @@
         const notFound = document.getElementById("itemNotFound");
         const newGroup = document.getElementById("newItemGroup");
 
-        const local = itemDatabase[barcode];
-        if (local) {
-            nameInput.value = local;
+        // Check local cache first (for speed), then do full lookup
+        const custom = JSON.parse(localStorage.getItem("customItems") || "{}");
+        if (custom[barcode]) {
+            nameInput.value = custom[barcode];
             notFound.style.display = "none";
             newGroup.style.display = "none";
         } else {
-            const custom = JSON.parse(localStorage.getItem("customItems") || "{}");
-            if (custom[barcode]) {
-                nameInput.value = custom[barcode];
-                notFound.style.display = "none";
-                newGroup.style.display = "none";
-            } else {
-                nameInput.value = "Searching...";
-                notFound.style.display = "none";
-                newGroup.style.display = "none";
-                lookupBarcode(barcode).then(name => {
-                    if (name) {
-                        nameInput.value = name;
+            nameInput.value = "Searching online...";
+            notFound.style.display = "none";
+            newGroup.style.display = "none";
+            // 1) Search internet first
+            lookupBarcode(barcode).then(async name => {
+                if (name) {
+                    nameInput.value = name;
+                    const c = JSON.parse(localStorage.getItem("customItems") || "{}");
+                    c[barcode] = name;
+                    localStorage.setItem("customItems", JSON.stringify(c));
+                } else {
+                    // 2) Not found online → search Google Sheet
+                    nameInput.value = "Checking Google Sheet...";
+                    const sheetName = await lookupFromSheet(barcode);
+                    if (sheetName) {
+                        nameInput.value = sheetName;
                         const c = JSON.parse(localStorage.getItem("customItems") || "{}");
-                        c[barcode] = name;
+                        c[barcode] = sheetName;
                         localStorage.setItem("customItems", JSON.stringify(c));
                     } else {
-                        nameInput.value = "Unknown Item";
-                        notFound.style.display = "block";
-                        newGroup.style.display = "block";
+                        // 3) Check local database
+                        const local = itemDatabase[barcode];
+                        if (local) {
+                            nameInput.value = local;
+                        } else {
+                            nameInput.value = "Unknown Item";
+                            notFound.style.display = "block";
+                            newGroup.style.display = "block";
+                        }
                     }
-                });
-            }
+                }
+            });
         }
 
         document.getElementById("qtyInput").value = 1;
@@ -371,16 +382,30 @@
     }
 
     async function lookupBarcode(barcode) {
+        // Search Open Food Facts
         try {
             const r = await fetch("https://world.openfoodfacts.org/api/v0/product/" + encodeURIComponent(barcode) + ".json");
             const d = await r.json();
             if (d.status === 1 && d.product) return d.product.product_name || d.product.product_name_en || null;
         } catch(e) {}
+        // Search Open Beauty Facts
         try {
             const r = await fetch("https://world.openbeautyfacts.org/api/v0/product/" + encodeURIComponent(barcode) + ".json");
             const d = await r.json();
             if (d.status === 1 && d.product) return d.product.product_name || d.product.product_name_en || null;
         } catch(e) {}
+        return null;
+    }
+
+    // Search Google Sheet for a barcode's item name
+    async function lookupFromSheet(barcode) {
+        if (!GOOGLE_SHEET_URL) return null;
+        try {
+            const url = GOOGLE_SHEET_URL + "?action=lookup&barcode=" + encodeURIComponent(barcode);
+            const r = await fetch(url);
+            const d = await r.json();
+            if (d.status === "found" && d.itemName) return d.itemName;
+        } catch(e) { console.log("Sheet lookup error:", e); }
         return null;
     }
 
