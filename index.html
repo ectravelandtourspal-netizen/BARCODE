@@ -375,8 +375,11 @@
         const timeout = new Promise(resolve => setTimeout(() => resolve(null), 6000));
 
         const sources = [
+            lookupUPCitemdb(barcode),
             lookupOpenFoodFacts(barcode),
             lookupOpenBeautyFacts(barcode),
+            lookupOpenProductsFacts(barcode),
+            lookupOpenPetFoodFacts(barcode),
             lookupFromSheet(barcode)
         ];
 
@@ -407,6 +410,16 @@
         });
     }
 
+    // UPCitemdb.com — large barcode database (free trial: 100 lookups/day)
+    async function lookupUPCitemdb(barcode) {
+        try {
+            const r = await fetch("https://api.upcitemdb.com/prod/trial/lookup?upc=" + encodeURIComponent(barcode));
+            const d = await r.json();
+            if (d.items && d.items.length > 0 && d.items[0].title) return d.items[0].title;
+        } catch(e) {}
+        return null;
+    }
+
     async function lookupOpenFoodFacts(barcode) {
         try {
             const r = await fetch("https://world.openfoodfacts.org/api/v0/product/" + encodeURIComponent(barcode) + ".json");
@@ -419,6 +432,26 @@
     async function lookupOpenBeautyFacts(barcode) {
         try {
             const r = await fetch("https://world.openbeautyfacts.org/api/v0/product/" + encodeURIComponent(barcode) + ".json");
+            const d = await r.json();
+            if (d.status === 1 && d.product) return d.product.product_name || d.product.product_name_en || null;
+        } catch(e) {}
+        return null;
+    }
+
+    // Open Products Facts — general products database
+    async function lookupOpenProductsFacts(barcode) {
+        try {
+            const r = await fetch("https://world.openproductsfacts.org/api/v0/product/" + encodeURIComponent(barcode) + ".json");
+            const d = await r.json();
+            if (d.status === 1 && d.product) return d.product.product_name || d.product.product_name_en || null;
+        } catch(e) {}
+        return null;
+    }
+
+    // Open Pet Food Facts
+    async function lookupOpenPetFoodFacts(barcode) {
+        try {
+            const r = await fetch("https://world.openpetfoodfacts.org/api/v0/product/" + encodeURIComponent(barcode) + ".json");
             const d = await r.json();
             if (d.status === 1 && d.product) return d.product.product_name || d.product.product_name_en || null;
         } catch(e) {}
